@@ -6,13 +6,18 @@
   <title>Project Hub</title>
   <style>
     :root {
-      --bg: #0d0d0d;
-      --card-bg: #141414;
-      --border: #2a2a2a;
-      --text: #e0e0e0;
-      --text-muted: #888888;
+      --bg: #0b0d12;
+      --card-bg: rgba(20, 24, 33, 0.75);
+      --card-hover-bg: rgba(28, 33, 46, 0.85);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(59, 130, 246, 0.4);
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.15);
       --white: #ffffff;
-      --black: #000000;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "Fira Code", "JetBrains Mono", Consolas, Monaco, monospace;
     }
 
     * {
@@ -24,7 +29,7 @@
     body {
       background-color: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: var(--font-sans);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -32,31 +37,43 @@
       justify-content: center;
       padding: 2rem 1rem;
       overflow-x: hidden;
+      position: relative;
     }
 
-    /* Subtle background grid */
-    body::before {
-      content: "";
+    /* Animated Code Background Canvas */
+    #code-canvas {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-image: 
-        radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-      background-size: 24px 24px;
       z-index: -1;
       pointer-events: none;
+      opacity: 0.35;
     }
 
     header {
       text-align: center;
       margin-bottom: 3.5rem;
-      animation: fadeInDown 0.8s ease-out forwards;
+      animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: var(--accent-glow);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     header h1 {
-      font-size: 2.2rem;
+      font-size: 2.5rem;
       font-weight: 700;
       letter-spacing: -0.03em;
       color: var(--white);
@@ -65,31 +82,44 @@
 
     header p {
       color: var(--text-muted);
-      font-size: 0.95rem;
-      letter-spacing: 0.02em;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
     }
 
     .container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.75rem;
       width: 100%;
-      max-width: 800px;
+      max-width: 840px;
+      z-index: 1;
     }
 
     .card {
       background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 2rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
-                  border-color 0.3s ease, 
-                  box-shadow 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       opacity: 0;
-      animation: fadeInUp 0.8s ease-out forwards;
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
     }
 
     .card:nth-child(1) {
@@ -101,9 +131,26 @@
     }
 
     .card:hover {
-      transform: translateY(-4px);
-      border-color: #555555;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      transform: translateY(-6px);
+      background: var(--card-hover-bg);
+      border-color: var(--border-hover);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px var(--accent-glow);
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .card-title {
@@ -116,49 +163,63 @@
 
     .card-description {
       color: var(--text-muted);
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin-bottom: 2rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2.25rem;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 0.75rem 1.25rem;
+      gap: 0.5rem;
+      padding: 0.8rem 1.25rem;
       background-color: var(--white);
-      color: var(--black);
+      color: #000000;
       text-decoration: none;
       font-weight: 600;
       font-size: 0.9rem;
-      border-radius: 6px;
-      transition: background-color 0.2s ease, transform 0.2s ease;
+      border-radius: 8px;
+      transition: all 0.2s ease;
       text-align: center;
     }
 
     .btn:hover {
-      background-color: #cccccc;
-      transform: scale(1.01);
+      background-color: #f1f5f9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
     }
 
     .btn:active {
-      transform: scale(0.98);
+      transform: translateY(0);
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s ease;
+    }
+
+    .btn:hover svg {
+      transform: translateX(3px);
     }
 
     footer {
       margin-top: 4rem;
       color: var(--text-muted);
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      letter-spacing: 0.03em;
       animation: fadeIn 1s ease-out 0.5s forwards;
       opacity: 0;
+      z-index: 1;
     }
 
     /* Keyframe Animations */
     @keyframes fadeInUp {
       from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(24px);
       }
       to {
         opacity: 1;
@@ -169,7 +230,7 @@
     @keyframes fadeInDown {
       from {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translateY(-24px);
       }
       to {
         opacity: 1;
@@ -186,31 +247,46 @@
 </head>
 <body>
 
+  <canvas id="code-canvas"></canvas>
+
   <header>
+    <div class="badge">&bull; System Online</div>
     <h1>Project Hub</h1>
-    <p>Select a destination to continue</p>
+    <p>Select a destination workspace to continue</p>
   </header>
 
   <main class="container">
     <!-- TurboV Launcher -->
     <article class="card">
       <div>
+        <div class="card-tags">
+          <span class="tag">C#</span>
+          <span class="tag">C++</span>
+          <span class="tag">Dashboard</span>
+        </div>
         <h2 class="card-title">TurboV Launcher</h2>
-        <p class="card-description">Access the core interface and dashboard tools.</p>
+        <p class="card-description">Access the core interface, local environments, and core system tools.</p>
       </div>
       <a href="https://launcher.turbov.dev" class="btn" target="_blank" rel="noopener noreferrer">
-        Visit website
+        <span>Visit website</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </a>
     </article>
 
     <!-- The Uncensored -->
     <article class="card">
       <div>
+        <div class="card-tags">
+          <span class="tag">Python</span>
+          <span class="tag">HTML</span>
+          <span class="tag">API</span>
+        </div>
         <h2 class="card-title">The Uncensored</h2>
-        <p class="card-description">Explore the unrestricted content hub.</p>
+        <p class="card-description">Explore the unrestricted platform repository and community resources.</p>
       </div>
       <a href="https://theuncensored.turbov.dev" class="btn" target="_blank" rel="noopener noreferrer">
-        Visit website
+        <span>Visit website</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </a>
     </article>
   </main>
@@ -219,5 +295,75 @@
     &copy; TurboV. All rights reserved.
   </footer>
 
+  <script>
+    // Coding Background Canvas Animation
+    const canvas = document.getElementById('code-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Code snippets from Python, C++, C#, HTML, JS
+    const codeSnippets = [
+      'def main():',
+      'import os, sys',
+      '#include <iostream>',
+      'using namespace std;',
+      'namespace TurboV {',
+      'public class Program',
+      'async Task<void>',
+      'const express = require("express");',
+      '<div class="app">',
+      'return std::move(res);',
+      'if __name__ == "__main__":',
+      'Console.WriteLine("TurboV");',
+      'std::cout << "Init";',
+      'fetch(endpoint).then();',
+      'auto ptr = std::make_shared();',
+      'struct Node { int id; };',
+      'npm run build',
+      'git commit -m "feat"'
+    ];
+
+    const columns = [];
+    const colCount = Math.floor(window.innerWidth / 180);
+
+    for (let i = 0; i < colCount; i++) {
+      columns.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        speed: 0.4 + Math.random() * 0.8,
+        snippet: codeSnippets[Math.floor(Math.random() * codeSnippets.length)],
+        fontSize: Math.floor(11 + Math.random() * 4),
+        opacity: 0.15 + Math.random() * 0.35
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '12px "Fira Code", Consolas, monospace';
+
+      columns.forEach(col => {
+        ctx.fillStyle = `rgba(59, 130, 246, ${col.opacity})`;
+        ctx.fillText(col.snippet, col.x, col.y);
+
+        col.y += col.speed;
+
+        if (col.y > canvas.height + 20) {
+          col.y = -20;
+          col.x = Math.random() * canvas.width;
+          col.snippet = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+        }
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
 </body>
 </html>
